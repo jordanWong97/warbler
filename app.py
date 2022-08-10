@@ -38,11 +38,14 @@ def add_user_to_g():
 
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
-        g.csrf_form = CSRFProtectForm()
 
     else:
         g.user = None
 
+@app.before_request
+def add_csrf_form_to_g():
+    """"""
+    g.csrf_form = CSRFProtectForm()
 
 def do_login(user):
     """Log in user."""
@@ -163,7 +166,6 @@ def show_user(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-
     return render_template('users/show.html', user=user)
 
 
@@ -244,6 +246,7 @@ def profile():
         g.user.header_image_url = form.header_image_url.data
         g.user.bio = form.bio.data
         password = form.password.data
+
         if not User.authenticate(g.user.username, password):
             form = EditUserForm(obj = g.user)
             flash("Access unauthorized.", "danger")
@@ -255,7 +258,6 @@ def profile():
 
     else:
         return render_template('users/edit.html', form = form)
-
 
 
 @app.post('/users/delete')
@@ -275,6 +277,19 @@ def delete_user():
     db.session.commit()
 
     return redirect("/signup")
+
+@app.get('/users/<int:user_id>/likedmessages')
+def show_liked_messages(user_id):
+    """Shows all of the user's liked messages."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    return render_template('users/like.html', user=user)
+
+
 
 
 ##############################################################################
