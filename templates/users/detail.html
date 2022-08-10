@@ -4,6 +4,8 @@
 
 <div id="warbler-hero"
      class="full-width">
+     <img src="{{ user.header_image_url }} ";
+     alt="Header Image for {{ user.username }}">
 </div>
 <img src="{{ user.image_url }}"
      alt="Image for {{ user.username }}"
@@ -80,10 +82,10 @@
 <div class="row">
   <div class="col-sm-3">
     <h4 id="sidebar-username">@{{ user.username }}</h4>
-    <p>BIO HERE</p>
+    <p>BIO: {{ user.bio }}</p>
     <p class="user-location">
       <span class="bi bi-map"></span>
-      LOCATION HERE
+      Location: {{ user.location}}
     </p>
   </div>
 
