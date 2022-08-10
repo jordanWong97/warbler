@@ -28,7 +28,7 @@ class Follows(db.Model):
         db.ForeignKey('users.id', ondelete="cascade"),
         primary_key=True,
     )
-
+# is primary/secondary join because of composite primary keys?
 
 class User(db.Model):
     """User in the system."""
