@@ -33,10 +33,12 @@ connect_db(app)
 
 @app.before_request
 def add_user_to_g():
-    """If we're logged in, add curr user to Flask global."""
+    """If we're logged in, add curr user to Flask global, and instantiate
+    CSRF Protection form"""
 
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
+        g.csrf_form = CSRFProtectForm()
 
     else:
         g.user = None
@@ -118,10 +120,8 @@ def login():
 def logout():
     """Handle logout of user and redirect to homepage."""
 
-    form = CSRFProtectForm()
+    form = g.csrf_form
 
-    # IMPLEMENT THIS AND FIX BUG
-    # DO NOT CHANGE METHOD ON ROUTE
     if form.validate_on_submit():
 
         do_logout()
@@ -345,7 +345,6 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-    form = CSRFProtectForm()
 
     if g.user:
         messages = (Message
@@ -356,7 +355,7 @@ def homepage():
                     .limit(100)
                     .all())
 
-        return render_template('home.html', messages=messages, form=form)
+        return render_template('home.html', messages=messages)
 
     else:
         return render_template('home-anon.html')
