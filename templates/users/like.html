@@ -10,16 +10,30 @@
       <a href="/messages/{{ message.id }}" class="message-link"></a>
 
       <a href="/users/{{ message.user.id }}">
-        <img src="{{ message.user.image_url }}"
-             alt="user image"
-             class="timeline-image">
+        <img src="{{ message.user.image_url }}" alt="user image" class="timeline-image">
       </a>
-
+      <div class="like">
+        {% if g.user.check_liked_message(message) %}
+        <form method="POST" action="/messages/{{ message.id }}/unlike">
+          {{ g.csrf_form.hidden_tag() }}
+          <button class="btn btn-primary btn-sm">
+            <i class="bi bi-emoji-smile-fill"></i>
+          </button>
+        </form>
+        {% elif g.user.id != message.user.id %}
+        <form method="POST" action="/messages/{{ message.id }}/like">
+          {{ g.csrf_form.hidden_tag() }}
+          <button class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-emoji-smile"></i>
+          </button>
+        </form>
+        {% endif %}
+      </div>
       <div class="message-area">
         <a href="/users/{{ message.user.id }}">@{{ message.user.username }}</a>
         <span class="text-muted">
-              {{ message.timestamp.strftime('%d %B %Y') }}
-            </span>
+          {{ message.timestamp.strftime('%d %B %Y') }}
+        </span>
         <p>{{ message.text }}</p>
       </div>
     </li>

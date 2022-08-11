@@ -177,9 +177,9 @@ class Message(db.Model):
 
     user_id = db.Column(
         db.Integer,
-        db.ForeignKey('users.id', ondelete='CASCADE'),
-        nullable=False,
+        db.ForeignKey('users.id', ondelete='CASCADE')
     )
+    # must enable nullable on foreign key for ondelete cascade to delete record
 
 class LikedMessage(db.Model):
     """Connection of a messages <-> liked_by_user."""
