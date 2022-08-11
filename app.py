@@ -336,16 +336,18 @@ def like_message(message_id):
 
     Adds message to liked_messages list for g.user
     """
-
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
+    form = g.csrf_form
 
-    msg = LikedMessage(user_id = g.user.id, message_id = message_id)
-    db.session.add(msg)
-    db.session.commit()
+    if form.validate_on_submit():
 
-    return redirect(f"/users/{g.user.id}/likedmessages")
+        msg = LikedMessage(user_id = g.user.id, message_id = message_id)
+        db.session.add(msg)
+        db.session.commit()
+
+        return redirect(f"/messages/{message_id}")
 
 
 @app.post('/messages/<int:message_id>/unlike')
@@ -359,13 +361,16 @@ def unlike_message(message_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    LikedMessage.query.filter(
+    form = g.csrf_form
+
+    if form.validate_on_submit():
+
+        LikedMessage.query.filter(
                     LikedMessage.message_id == message_id,
                     LikedMessage.user_id == g.user.id).delete()
+        db.session.commit()
 
-    db.session.commit()
-
-    return redirect(f"/users/{g.user.id}/likedmessages")
+        return redirect(f"/messages/{message_id}")
 
 
 @app.post('/messages/<int:message_id>/delete')

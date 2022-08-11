@@ -34,15 +34,18 @@
               </button>
             </form>
             {% endif %}
-            <!-- TODO: -->
             {% if g.user.check_liked_message(message) %}
             <form method="POST" action="/messages/{{ message.id }}/unlike">
-              <button class="btn btn-primary">Unlike</button>
+              {{ g.csrf_form.hidden_tag() }}
+              <button class="btn btn-primary btn-sm">
+                <i class="bi bi-emoji-smile-fill"></i>
+              </button>
             </form>
-            {% else %}
+            {% elif g.user.id != message.user.id %}
             <form method="POST" action="/messages/{{ message.id }}/like">
+              {{ g.csrf_form.hidden_tag() }}
               <button class="btn btn-outline-primary btn-sm">
-                Like
+                <i class="bi bi-emoji-smile"></i>
               </button>
             </form>
             {% endif %}
