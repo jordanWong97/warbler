@@ -6,7 +6,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import EditUserForm, UserAddForm, LoginForm, MessageForm, CSRFProtectForm
-from models import db, connect_db, User, Message
+from models import LikedMessage, db, connect_db, User, Message
 
 load_dotenv()
 
@@ -328,6 +328,44 @@ def show_message(message_id):
 
     msg = Message.query.get_or_404(message_id)
     return render_template('messages/show.html', message=msg)
+
+
+@app.post('/messages/<int:message_id>/like')
+def like_message(message_id):
+    """Like a message.
+
+    Adds message to liked_messages list for g.user
+    """
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    msg = LikedMessage(user_id = g.user.id, message_id = message_id)
+    db.session.add(msg)
+    db.session.commit()
+
+    return redirect(f"/users/{g.user.id}/likedmessages")
+
+
+@app.post('/messages/<int:message_id>/unlike')
+def unlike_message(message_id):
+    """Unlike a message.
+
+    Removes message from liked_messages list for g.user
+    """
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    LikedMessage.query.filter(
+                    LikedMessage.message_id == message_id,
+                    LikedMessage.user_id == g.user.id).delete()
+
+    db.session.commit()
+
+    return redirect(f"/users/{g.user.id}/likedmessages")
 
 
 @app.post('/messages/<int:message_id>/delete')
