@@ -71,3 +71,5 @@ class MessageModelTestCase(TestCase):
         db.session.add(m3)
 
         self.assertRaises(IntegrityError, db.session.commit)
+
+    # TODO: what else?

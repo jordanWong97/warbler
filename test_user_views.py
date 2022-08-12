@@ -51,7 +51,7 @@ class BaseViewTestCase(TestCase):
 
     def tearDown(self):
         db.session.rollback()
-        # rollback only if commit fails?
+        # TODO: rollback only if commit fails?
 
 
     def test_signup_page(self):
@@ -218,6 +218,7 @@ class BaseViewTestCase(TestCase):
 
     def test_show_user_followers_if_logged_out(self):
         """ tests redirect to home anon page if user is logged out """
+
         with self.client as c:
 
             resp = c.get(f'/users/{self.u1_id}/followers',
@@ -308,7 +309,7 @@ class BaseViewTestCase(TestCase):
 
             resp = c.post(f"/users/delete", follow_redirects = True)
 
-            # is this a good check?
+            #TODO: is this a good check?
             user = User.query.get(self.u1_id)
             html = resp.get_data(as_text=True)
 

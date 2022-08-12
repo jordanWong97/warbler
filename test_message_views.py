@@ -8,7 +8,7 @@
 import os
 from unittest import TestCase
 
-from models import db, Message, User
+from models import LikedMessage, db, Message, User
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -36,6 +36,7 @@ app.config['WTF_CSRF_ENABLED'] = False
 
 class MessageBaseViewTestCase(TestCase):
     def setUp(self):
+        Message.query.delete()
         User.query.delete()
 
         u1 = User.signup("u1", "u1@email.com", "password", None)
@@ -77,6 +78,20 @@ class MessageAddViewTestCase(MessageBaseViewTestCase):
             self.assertIn('<p>Hello</p>', html)
 
 
+    def test_render_add_message(self):
+        """ tests if we render the create message form"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
+            resp = c.get("/messages/new")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<form method="POST">', html)
+            self.assertIn('<button class="btn', html)
+
+
     def test_add_message_if_not_logged_in(self):
         """ test redirecting for adding message when not logged in """
 
@@ -92,6 +107,7 @@ class MessageAddViewTestCase(MessageBaseViewTestCase):
             self.assertIn('home anon page test', html)
 
 
+    # TODO: is it possible to access adding a message as another user?
     # def test_add_message_as_another_user(self):
     #     """ test prohibiting from adding message as another user """
 
@@ -153,21 +169,63 @@ class MessageAddViewTestCase(MessageBaseViewTestCase):
             self.assertIn('<p>@u1', html)
 
 
-    def test_show_user_messages(self):
-        """ test prohibiting from deleting message as another user """
+    def test_show_message(self):
+        """ tests if specific message page renders """
 
         with self.client as c:
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.u1_id
 
+        resp = c.get(f'/messages/{self.m1_id}')
+        html = resp.get_data(as_text=True)
 
-            resp = c.post(f"/messages/{self.m2_id}/delete", follow_redirects = True)
-            html = resp.get_data(as_text=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('<div class="message-area">', html)
+        self.assertIn('m1-text</p>', html)
 
-            Message.query.filter_by(text="m2-text").one()
 
-            self.assertEqual(resp.status_code, 200)
-            self.assertIn('<p>@u1', html)
+    def test_like_message(self):
+        """ tests if a liked message is added to user's liked messages list and
+        route redirects back to user profile"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
+
+        resp = c.post(f"/messages/{self.m2_id}/like", follow_redirects = True)
+        html = resp.get_data(as_text=True)
+
+        LikedMessage.query.filter_by(user_id = self.u1_id,
+                                    message_id = self.m2_id).one()
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('<div class="col-sm-6">', html)
+        self.assertIn('show user profile test', html)
+
+
+    def test_unlike_message(self):
+        """ tests if a liked message is removed from user's liked messages list
+        and route redirects back to user profile"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
+
+        c.post(f"/messages/{self.m2_id}/like")
+        resp = c.post(f"/messages/{self.m2_id}/unlike", follow_redirects = True)
+        html = resp.get_data(as_text=True)
+
+        unliked = LikedMessage.query.filter_by(user_id = self.u1_id,
+                                    message_id = self.m2_id).all()
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('<div class="col-sm-6">', html)
+        self.assertIn('show user profile test', html)
+        self.assertFalse(unliked)
+
+
+
+
 
 
 
