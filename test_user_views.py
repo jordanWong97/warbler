@@ -1,4 +1,4 @@
-"""Message View tests."""
+"""User View tests."""
 
 # run these tests like:
 #
@@ -40,15 +40,11 @@ class BaseViewTestCase(TestCase):
 
         u1 = User.signup("u1", "u1@email.com", "password", None)
         u2 = User.signup("u2", "u2@email.com", "password", None)
-        db.session.flush()
 
-        m1 = Message(text="m1-text", user_id=u1.id)
-        db.session.add_all([m1])
         db.session.commit()
 
         self.u1_id = u1.id
         self.u2_id = u2.id
-        self.m1_id = m1.id
 
         self.client = app.test_client()
 
@@ -67,7 +63,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('Join Warbler today', html)
+            self.assertIn('<form method="POST"', html)
+            self.assertIn('signup form test', html)
 
 
     def test_signup(self):
@@ -95,7 +92,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('Welcome back.', html)
+            self.assertIn('<form method="POST"', html)
+            self.assertIn('login form test', html)
 
 
     def test_user_login(self):
@@ -122,7 +120,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('Welcome back.', html)
+            self.assertIn('<form method="POST"', html)
+            self.assertIn('login form test', html)
 
 
     def test_list_users(self):
@@ -153,7 +152,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<ul class="list-group" id="messages">', html)
+            self.assertIn('<ul class="list-group"', html)
+            self.assertIn('show user profile test', html)
 
 
     def test_show_single_user_if_not_logged_in(self):
@@ -166,7 +166,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<div class="home-hero">', html)
+            self.assertIn('<a href="/signup"', html)
+            self.assertIn('home anon page test', html)
 
 
     def test_show_user_following_if_logged_in(self):
@@ -182,10 +183,11 @@ class BaseViewTestCase(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn('<div class="col-sm-9">', html)
+            self.assertIn('user following test', html)
 
 
     def test_show_user_following_if_logged_out(self):
-        """ tests if a user's following page renders if user is logged out """
+        """ tests redirect to home anon page if user is logged out """
 
         with self.client as c:
 
@@ -194,12 +196,28 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<div class="home-hero">', html)
+            self.assertIn('<a href="/signup"', html)
+            self.assertIn('home anon page test', html)
+
+
+    def test_show_user_followers_if_logged_in(self):
+        """ tests if a user's followers page renders if user is logged in """
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
+
+
+            resp = c.get(f'/users/{self.u1_id}/followers')
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<div class="col-sm-9">', html)
+            self.assertIn('user followers test', html)
 
 
     def test_show_user_followers_if_logged_out(self):
-        """ tests if a user's followers page renders if user is logged out """
-
+        """ tests redirect to home anon page if user is logged out """
         with self.client as c:
 
             resp = c.get(f'/users/{self.u1_id}/followers',
@@ -207,7 +225,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<div class="home-hero">', html)
+            self.assertIn('<a href="/signup"', html)
+            self.assertIn('home anon page test', html)
 
 
     def test_user_follow(self):
@@ -222,8 +241,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<div class="col-sm-9">', html)
             self.assertIn('<p>@u2', html)
+            self.assertIn('user following test', html)
 
 
     def test_user_stop_follow(self):
@@ -240,8 +259,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<div class="col-sm-9">', html)
             self.assertNotIn('<p>@u2', html)
+            self.assertIn('user following test', html)
 
 
     def test_render_profile(self):
@@ -251,12 +270,12 @@ class BaseViewTestCase(TestCase):
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.u1_id
 
-
             resp = c.get(f'/users/profile')
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<h2 class="join-message">Edit Your Profile.</h2>', html)
+            self.assertIn('<form method="POST"', html)
+            self.assertIn(f'<a href="/users/{self.u1_id}"', html)
 
 
     def test_edit_profile(self):
@@ -267,7 +286,7 @@ class BaseViewTestCase(TestCase):
                 sess[CURR_USER_KEY] = self.u1_id
 
             resp = c.post(f"/users/profile", follow_redirects = True,
-                                            data = {"username": "hello",
+                                            data = {"username": "change_u1",
                                                     "email": "test@test2.com",
                                                     "image_url":"",
                                                     "header_image_url":"",
@@ -276,7 +295,7 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('hello', html)
+            self.assertIn('change_u1', html)
             self.assertIn('test@test2.com', html)
 
 
@@ -294,7 +313,8 @@ class BaseViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('<div class="row justify-content-md-center">', html)
+            self.assertIn('<div class="row', html)
+            self.assertIn('signup form test', html)
             self.assertIsNone(user)
 
 
@@ -310,3 +330,4 @@ class BaseViewTestCase(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn('<ul class="list-group', html)
+            self.assertIn('liked message test', html)

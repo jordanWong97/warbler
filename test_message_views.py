@@ -39,14 +39,19 @@ class MessageBaseViewTestCase(TestCase):
         User.query.delete()
 
         u1 = User.signup("u1", "u1@email.com", "password", None)
+        u2 = User.signup("u2", "u2@email.com", "password", None)
         db.session.flush()
 
         m1 = Message(text="m1-text", user_id=u1.id)
-        db.session.add_all([m1])
+        m2 = Message(text="m2-text", user_id=u2.id)
+        db.session.add_all([m1, m2])
         db.session.commit()
 
         self.u1_id = u1.id
+        self.u2_id = u2.id
+
         self.m1_id = m1.id
+        self.m2_id = m2.id
 
         self.client = app.test_client()
 
@@ -61,8 +66,116 @@ class MessageAddViewTestCase(MessageBaseViewTestCase):
 
             # Now, that session setting is saved, so we can have
             # the rest of ours test
-            resp = c.post("/messages/new", data={"text": "Hello"})
-
-            self.assertEqual(resp.status_code, 302)
+            resp = c.post("/messages/new",
+                            data={"text": "Hello"},
+                            follow_redirects = True)
+            html = resp.get_data(as_text=True)
 
             Message.query.filter_by(text="Hello").one()
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<p>Hello</p>', html)
+
+
+    def test_add_message_if_not_logged_in(self):
+        """ test redirecting for adding message when not logged in """
+
+        with self.client as c:
+
+            resp = c.post("/messages/new",
+                            data={"text": "Hello"},
+                            follow_redirects = True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<a href="/signup"', html)
+            self.assertIn('home anon page test', html)
+
+
+    # def test_add_message_as_another_user(self):
+    #     """ test prohibiting from adding message as another user """
+
+    #     with self.client as c:
+    #         with c.session_transaction() as sess:
+    #             sess[CURR_USER_KEY] = self.u2_id
+
+    #         resp = c.post("/messages/new",
+    #                         data={"text": "Hello"},
+    #                         follow_redirects = True)
+    #         html = resp.get_data(as_text=True)
+
+    #         self.assertEqual(resp.status_code, 200)
+    #         self.assertIn('<p>Hello</p>', html)
+
+
+    def test_delete_message(self):
+        """ test deleting a message when logged in """
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
+
+            Message.query.filter_by(text="m1-text").one()
+
+            resp = c.post(f"/messages/{self.m1_id}/delete", follow_redirects = True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn('m1-text', html)
+
+
+    def test_delete_message_if_not_logged_in(self):
+        """ test redirecting for deleting message when not logged in """
+
+        with self.client as c:
+
+            resp = c.post(f"/messages/{self.m1_id}/delete", follow_redirects = True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<a href="/signup"', html)
+            self.assertIn('home anon page test', html)
+
+
+    def test_delete_message_as_another_user(self):
+        """ test prohibiting from deleting message as another user """
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
+
+
+            resp = c.post(f"/messages/{self.m2_id}/delete", follow_redirects = True)
+            html = resp.get_data(as_text=True)
+
+            Message.query.filter_by(text="m2-text").one()
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<p>@u1', html)
+
+
+    def test_show_user_messages(self):
+        """ test prohibiting from deleting message as another user """
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
+
+
+            resp = c.post(f"/messages/{self.m2_id}/delete", follow_redirects = True)
+            html = resp.get_data(as_text=True)
+
+            Message.query.filter_by(text="m2-text").one()
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<p>@u1', html)
+
+
+
+
+
+
+
+
+
+
+

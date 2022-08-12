@@ -62,3 +62,12 @@ class MessageModelTestCase(TestCase):
 
         self.assertEqual(msg1.text, 'text')
         self.assertEqual(msg1.user_id, self.u1_id)
+
+
+    def test_empty_text(self):
+        """ test message model error for empty message string"""
+
+        m3 = Message(text = None, user_id = self.u1_id)
+        db.session.add(m3)
+
+        self.assertRaises(IntegrityError, db.session.commit)

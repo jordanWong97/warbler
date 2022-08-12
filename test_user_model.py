@@ -10,7 +10,6 @@ from unittest import TestCase
 
 from models import db, User, Message, Follows
 from sqlalchemy.exc import IntegrityError
-# from psycopg2 import errors
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -105,12 +104,7 @@ class UserModelTestCase(TestCase):
         """ test user sign up fails when unique column data is entered """
         u4 = User.signup("u1", "u4@email.com", "password", None)
 
-        # try:
-        #     db.session.commit()
-        # except IntegrityError:
-        #     return 'username already exists'
-
-        # self.assertIsInstance(db.session.commit(), IntegrityError)
+        self.assertRaises(IntegrityError, db.session.commit)
 
 
     def test_user_authenticate(self):
@@ -133,9 +127,3 @@ class UserModelTestCase(TestCase):
 
         test_fail_user = User.authenticate('u1', 'badpass')
         self.assertFalse(test_fail_user)
-
-
-
-
-
-

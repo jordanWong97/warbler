@@ -387,12 +387,13 @@ def delete_message(message_id):
     Check that this message was written by the current user.
     Redirect to user page on success.
     """
+    msg = Message.query.get_or_404(message_id)
 
-    if not g.user:
+    if not g.user or g.user.id != msg.user_id:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    msg = Message.query.get_or_404(message_id)
+    # msg = Message.query.get_or_404(message_id)
     db.session.delete(msg)
     db.session.commit()
 
