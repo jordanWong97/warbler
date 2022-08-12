@@ -5,7 +5,6 @@
 #    python -m unittest test_user_model.py
 
 
-from distutils.log import error
 import os
 from unittest import TestCase
 
