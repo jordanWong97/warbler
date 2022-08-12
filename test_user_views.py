@@ -33,6 +33,8 @@ db.create_all()
 
 app.config['WTF_CSRF_ENABLED'] = False
 
+# can create other TestCases based on groups of routes/functions
+# class UserTestCase(BaseViewTestCase)
 
 class BaseViewTestCase(TestCase):
     def setUp(self):
@@ -51,7 +53,6 @@ class BaseViewTestCase(TestCase):
 
     def tearDown(self):
         db.session.rollback()
-        # TODO: rollback only if commit fails?
 
 
     def test_signup_page(self):
@@ -83,7 +84,7 @@ class BaseViewTestCase(TestCase):
             self.assertIn('<p>@test_user1', html)
 
 
-    def test_login_page(self):
+    def test_login_render(self):
         """tests if user login renders"""
 
         with self.client as c:
@@ -96,14 +97,17 @@ class BaseViewTestCase(TestCase):
             self.assertIn('login form test', html)
 
 
-    def test_user_login(self):
+    def test_user_login_success(self):
         """ tests redirect on successful user login """
 
         with self.client as c:
 
-            resp = c.post("/login", follow_redirects = True,
-                                    data={"username": "u1",
-                                        "password": "password"})
+            resp = c.post(
+                "/login",
+                follow_redirects = True,
+                data={
+                    "username": "u1",
+                    "password": "password"})
 
             html = resp.get_data(as_text=True)
 
@@ -115,8 +119,10 @@ class BaseViewTestCase(TestCase):
         """ tests if logout redirects correctly back to login page """
 
         with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
 
-            resp = c.post("/login", follow_redirects = True)
+            resp = c.post("/logout", follow_redirects = True)
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
@@ -130,7 +136,6 @@ class BaseViewTestCase(TestCase):
         with self.client as c:
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.u1_id
-
 
             resp = c.get('/users')
             html = resp.get_data(as_text=True)
@@ -146,7 +151,6 @@ class BaseViewTestCase(TestCase):
         with self.client as c:
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.u1_id
-
 
             resp = c.get(f'/users/{self.u1_id}')
             html = resp.get_data(as_text=True)
@@ -176,7 +180,6 @@ class BaseViewTestCase(TestCase):
         with self.client as c:
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.u1_id
-
 
             resp = c.get(f'/users/{self.u1_id}/following')
             html = resp.get_data(as_text=True)
@@ -309,7 +312,6 @@ class BaseViewTestCase(TestCase):
 
             resp = c.post(f"/users/delete", follow_redirects = True)
 
-            #TODO: is this a good check?
             user = User.query.get(self.u1_id)
             html = resp.get_data(as_text=True)
 

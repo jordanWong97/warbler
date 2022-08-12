@@ -107,23 +107,6 @@ class MessageAddViewTestCase(MessageBaseViewTestCase):
             self.assertIn('home anon page test', html)
 
 
-    # TODO: is it possible to access adding a message as another user?
-    # def test_add_message_as_another_user(self):
-    #     """ test prohibiting from adding message as another user """
-
-    #     with self.client as c:
-    #         with c.session_transaction() as sess:
-    #             sess[CURR_USER_KEY] = self.u2_id
-
-    #         resp = c.post("/messages/new",
-    #                         data={"text": "Hello"},
-    #                         follow_redirects = True)
-    #         html = resp.get_data(as_text=True)
-
-    #         self.assertEqual(resp.status_code, 200)
-    #         self.assertIn('<p>Hello</p>', html)
-
-
     def test_delete_message(self):
         """ test deleting a message when logged in """
         with self.client as c:
@@ -158,7 +141,6 @@ class MessageAddViewTestCase(MessageBaseViewTestCase):
         with self.client as c:
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.u1_id
-
 
             resp = c.post(f"/messages/{self.m2_id}/delete", follow_redirects = True)
             html = resp.get_data(as_text=True)
@@ -222,18 +204,3 @@ class MessageAddViewTestCase(MessageBaseViewTestCase):
         self.assertIn('<div class="col-sm-6">', html)
         self.assertIn('show user profile test', html)
         self.assertFalse(unliked)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
