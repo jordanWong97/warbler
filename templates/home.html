@@ -56,14 +56,14 @@
           <form method="POST" action="/messages/{{ msg.id }}/unlike">
             {{ g.csrf_form.hidden_tag() }}
             <button class="btn btn-primary btn-sm">
-              <i class="bi bi-emoji-smile-fill"></i>
+              <i class="bi bi-tree-fill"></i>
             </button>
           </form>
           {% elif g.user.id != msg.user.id %}
           <form method="POST" action="/messages/{{ msg.id }}/like">
             {{ g.csrf_form.hidden_tag() }}
             <button class="btn btn-outline-primary btn-sm">
-              <i class="bi bi-emoji-smile"></i>
+              <i class="bi bi-tree"></i>
             </button>
           </form>
           {% endif %}
